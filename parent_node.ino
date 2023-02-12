@@ -19,7 +19,7 @@ int ChildCnt = 0;
 #define SERVO 26
 #define STALL 91 // Middle of servo (no movement)
 #define SPEED 100 // Rotation direction and speed 
-#define DELAY 9000 // Time to keep servo active
+#define DELAY 3000 // Time to keep servo active
 
 #define PWR 33
 #define CONNECTED 25 // TBD
@@ -27,13 +27,21 @@ int ChildCnt = 0;
 int retries = 5;
 DateTime lastFeed;
 
+struct feed_times
+{
+  int hour;
+  int minute;
+  String printable_time;
+};
+
 class Feed { 
   public:
-    int morningHour = 8;
-    int afternoonHour = 17;
-
-    String morning = "8:00";
-    String afternoon = "17:00";
+    feed_times midnight = {0, 0, "00:00 AM"};
+    feed_times early = {4, 0, "04:00 AM"};
+    feed_times morning = {8, 0, "08:00 AM"};
+    feed_times lunch = {12, 0, "12:00 PM"};
+    feed_times afternoon = {16, 0, "04:00 PM"};
+    feed_times night = {20, 0, "08:00 PM"};
 
     int feedDelay = 6; // arbitrary number to make sure it doesn't run multiple times in a TimeSpan
 
@@ -48,16 +56,44 @@ class Feed {
 
       TimeSpan span = TimeSpan(0, feedDelay, 0, 0); // d, |h|, m, s
       DateTime difference = current_time - span;
-      bool feedThem = (currentHour == morningHour
-        || currentHour == afternoonHour) 
-        && difference >= lastFeed;
+      bool feedThem = (
+        currentHour == midnight.hour
+          || currentHour == early.hour
+          || currentHour == morning.hour
+          || currentHour == lunch.hour
+          || currentHour == afternoon.hour
+          || currentHour == night.hour
+        ) && difference >= lastFeed;
       return feedThem;
     }
 
     String getNextFeed(DateTime current_time) {
       int hour = current_time.hour();
-      String next = hour > morningHour && hour <= afternoonHour ? afternoon : morning;
-
+      String next;
+      if (hour >= night.hour && minute > night.minute)
+      {
+        next = midnight.printable_time;
+      }
+      else if (hour >= afternoon.hour && minute > afternoon.minute)
+      {
+        next = night.printable_time;
+      }
+      else if (hour >= lunch.hour && minute > lunch.minute)
+      {
+        next = afternoon.printable_time;
+      }
+      else if (hour >= morning.hour && minute > morning.minute)
+      {
+        next = lunch.printable_time;
+      }
+      else if (hour >= early.hour && minute > early.minute)
+      {
+        next = morning.printable_time;
+      }
+      else
+      {
+        next = early.printable_time;
+      }
       return next;
     }
 };
