@@ -7,10 +7,10 @@
 Servo auger; // continuous servo
 RTC_DS1307 rtc;
 
-// Global copy of slave
-#define NUMSLAVES 3
-esp_now_peer_info_t slaves[NUMSLAVES] = {};
-int SlaveCnt = 0;
+// Global copy of child
+#define NUMCHILDREN 3
+esp_now_peer_info_t children[NUMCHILDREN] = {};
+int ChildCnt = 0;
 
 #define CHANNEL 1
 #define PRINTSCANRESULTS 0
@@ -78,12 +78,12 @@ void InitESPNow() {
   }
 }
 
-// Scan for slaves in AP mode
-void ScanForSlave() {
+// Scan for children in AP mode
+void ScanForChild() {
   int8_t scanResults = WiFi.scanNetworks();
-  //reset slaves
-  memset(slaves, 0, sizeof(slaves));
-  SlaveCnt = 0;
+  //reset children
+  memset(children, 0, sizeof(children));
+  ChildCnt = 0;
   Serial.println("");
   if (scanResults == 0) {
     Serial.println("No WiFi devices in AP Mode found");
@@ -99,29 +99,29 @@ void ScanForSlave() {
         Serial.print(i + 1); Serial.print(": "); Serial.print(SSID); Serial.print(" ["); Serial.print(BSSIDstr); Serial.print("]"); Serial.print(" ("); Serial.print(RSSI); Serial.print(")"); Serial.println("");
       }
       delay(10);
-      // Check if the current device starts with `Slave`
+      // Check if the current device starts with `Child`
       if (SSID.indexOf("ESPChild") == 0) {
         // SSID of interest
         Serial.print(i + 1); Serial.print(": "); Serial.print(SSID); Serial.print(" ["); Serial.print(BSSIDstr); Serial.print("]"); Serial.print(" ("); Serial.print(RSSI); Serial.print(")"); Serial.println("");
-        // Get BSSID => Mac Address of the Slave
+        // Get BSSID => Mac Address of the Child
         int mac[6];
 
         if ( 6 == sscanf(BSSIDstr.c_str(), "%x:%x:%x:%x:%x:%x",  &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5] ) ) {
           for (int ii = 0; ii < 6; ++ii ) {
-            slaves[SlaveCnt].peer_addr[ii] = (uint8_t) mac[ii];
+            children[ChildCnt].peer_addr[ii] = (uint8_t) mac[ii];
           }
         }
-        slaves[SlaveCnt].channel = CHANNEL; // pick a channel
-        slaves[SlaveCnt].encrypt = 0; // no encryption
-        SlaveCnt++;
+        children[ChildCnt].channel = CHANNEL; // pick a channel
+        children[ChildCnt].encrypt = 0; // no encryption
+        ChildCnt++;
       }
     }
   }
 
-  if (SlaveCnt > 0) {
-    Serial.print(SlaveCnt); Serial.println(" Slave(s) found, processing..");
+  if (ChildCnt > 0) {
+    Serial.print(ChildCnt); Serial.println(" Child(s) found, processing..");
   } else {
-    Serial.println("No Slave Found, trying again.");
+    Serial.println("No Child Found, trying again.");
     digitalWrite(CONNECTED, LOW);
   }
 
@@ -129,26 +129,26 @@ void ScanForSlave() {
   WiFi.scanDelete();
 }
 
-// Check if the slave is already paired with the master.
-// If not, pair the slave with master
-void manageSlave() {
-  if (SlaveCnt > 0) {
-    for (int i = 0; i < SlaveCnt; i++) {
+// Check if the child is already paired with the parent.
+// If not, pair the child with parent
+void manageChild() {
+  if (ChildCnt > 0) {
+    for (int i = 0; i < ChildCnt; i++) {
       Serial.print("Processing: ");
       for (int ii = 0; ii < 6; ++ii ) {
-        Serial.print((uint8_t) slaves[i].peer_addr[ii], HEX);
+        Serial.print((uint8_t) children[i].peer_addr[ii], HEX);
         if (ii != 5) Serial.print(":");
       }
       Serial.print(" Status: ");
       // check if the peer exists
-      bool exists = esp_now_is_peer_exist(slaves[i].peer_addr);
+      bool exists = esp_now_is_peer_exist(children[i].peer_addr);
       if (exists) {
-        // Slave already paired.
+        // Child already paired.
         Serial.println("Already Paired");
         digitalWrite(CONNECTED, HIGH);
       } else {
-        // Slave not paired, attempt pair
-        esp_err_t addStatus = esp_now_add_peer(&slaves[i]);
+        // Child not paired, attempt pair
+        esp_err_t addStatus = esp_now_add_peer(&children[i]);
         if (addStatus == ESP_OK) {
           // Pair success
           Serial.println("Pair success");
@@ -177,8 +177,8 @@ void manageSlave() {
       }
     }
   } else {
-    // No slave found to process
-    Serial.println("No Slave found to process");
+    // No child found to process
+    Serial.println("No Child found to process");
     digitalWrite(CONNECTED, LOW);
   }
 }
@@ -208,10 +208,10 @@ uint8_t data = 0;
 bool sendData() {
   data++;
   Serial.print("CHILD COUNT: ");
-  Serial.println(SlaveCnt);
-  for (int i = 0; i < SlaveCnt; i++) {
-    const uint8_t *peer_addr = slaves[i].peer_addr;
-    if (i == 0) { // print only for first slave
+  Serial.println(ChildCnt);
+  for (int i = 0; i < ChildCnt; i++) {
+    const uint8_t *peer_addr = children[i].peer_addr;
+    if (i == 0) { // print only for first child
       Serial.print("Sending: ");
       Serial.println(data);
     }
@@ -219,7 +219,7 @@ bool sendData() {
     Serial.print("Send Status: ");
     if (result == ESP_OK) {
       Serial.println("Success");
-      if(i == SlaveCnt - 1) {
+      if(i == ChildCnt - 1) {
         handleFeed();
         return false;
       }
@@ -247,7 +247,7 @@ bool sendData() {
   }
 }
 
-// callback when data is sent from Master to Slave
+// callback when data is sent from Parent to Child
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   char macStr[18];
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
@@ -274,8 +274,8 @@ void setup() {
   
   //Set device in STA mode to begin with
   WiFi.mode(WIFI_STA);
-  Serial.println("ESPNow/Multi-Slave/Master Example");
-  // This is the mac address of the Master in Station Mode
+  Serial.println("ESPNow/Multi-Child/Parent Example");
+  // This is the mac address of the Parent in Station Mode
   Serial.print("STA MAC: "); Serial.println(WiFi.macAddress());
   // Init ESPNow with a fallback logic
   InitESPNow();
@@ -285,14 +285,14 @@ void setup() {
 }
 
 void loop() {
-  // In the loop we scan for slave
-  ScanForSlave();
-  // If Slave is found, it would be populate in `slave` variable
-  // We will check if `slave` is defined and then we proceed further
-  if (SlaveCnt > 0) { // check if slave channel is defined
-    // `slave` is defined
-    // Add slave as peer if it has not been added already
-    manageSlave();
+  // In the loop we scan for child
+  ScanForChild();
+  // If Child is found, it would be populate in `child` variable
+  // We will check if `child` is defined and then we proceed further
+  if (ChildCnt > 0) { // check if child channel is defined
+    // `child` is defined
+    // Add child as peer if it has not been added already
+    manageChild();
     // pair success or already paired
     // Send data to device
     int current_try = 1;
@@ -323,7 +323,7 @@ void loop() {
     }
     
   } else {
-    // No slave found to process
+    // No child found to process
   }
 
   delay(20); 

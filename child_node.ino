@@ -76,12 +76,12 @@ void setup() {
   digitalWrite(PWR, HIGH);
   digitalWrite(CONNECTED, LOW);
   
-  Serial.println("ESPNow/Basic/Slave Example");
+  Serial.println("ESPNow/Basic/child Example");
   //Set device in AP mode to begin with
   WiFi.mode(WIFI_AP);
   // configure device AP mode
   configDeviceAP();
-  // This is the mac address of the Slave in AP Mode
+  // This is the mac address of the child in AP Mode
   Serial.print("AP MAC: "); Serial.println(WiFi.softAPmacAddress());
   // Init ESPNow with a fallback logic
   InitESPNow();
@@ -90,7 +90,7 @@ void setup() {
   esp_now_register_recv_cb(OnDataRecv);
 }
 
-// callback when data is recv from Master
+// callback when data is recv from Parent
 void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int data_len) {
   char macStr[18];
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
