@@ -48,19 +48,11 @@ void configDeviceAP() {
 }
 
 void handleFeed() {
-  // Run for half time
-  // Rotate the opposite direction quickly to loosen any potential blockage
-  // Continue 
   auger.attach(SERVO);
   delay(500);
 
-  int half = DELAY / 2;
   auger.write(SPEED);
-  delay(half);
-  auger.write(80);
-  delay(250);
-  auger.write(SPEED);
-  delay(half);
+  delay(DELAY);
 
   auger.write(STALL);
   delay(500);
