@@ -14,6 +14,7 @@ int ChildCnt = 0;
 
 #define CHANNEL 1
 #define PRINTSCANRESULTS 0
+#define SETRTC 0
 
 #define SERVO 26
 #define STALL 91 // Middle of servo (no movement)
@@ -262,7 +263,9 @@ void setup() {
     while (1);
   }
 
-  // rtc.adjust(DateTime(F(__DATE__), F(__TIME__))); // sets RTC time to time this sketch was compiled
+  if(SETRTC) {
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__))); // sets RTC time to time this sketch was compiled
+  }
   
   //Set device in STA mode to begin with
   WiFi.mode(WIFI_STA);
