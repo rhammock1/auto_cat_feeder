@@ -70,28 +70,17 @@ class Feed {
     String getNextFeed(DateTime current_time) {
       int hour = current_time.hour();
       String next;
-      if (hour >= night.hour && minute > night.minute)
-      {
+      if(hour >= night.hour && minute > night.minute) {
         next = midnight.printable_time;
-      }
-      else if (hour >= afternoon.hour && minute > afternoon.minute)
-      {
+      } else if(hour >= afternoon.hour && minute > afternoon.minute) {
         next = night.printable_time;
-      }
-      else if (hour >= lunch.hour && minute > lunch.minute)
-      {
+      } else if(hour >= lunch.hour && minute > lunch.minute) {
         next = afternoon.printable_time;
-      }
-      else if (hour >= morning.hour && minute > morning.minute)
-      {
+      } else if(hour >= morning.hour && minute > morning.minute) {
         next = lunch.printable_time;
-      }
-      else if (hour >= early.hour && minute > early.minute)
-      {
+      } else if(hour >= early.hour && minute > early.minute) {
         next = morning.printable_time;
-      }
-      else
-      {
+      } else {
         next = early.printable_time;
       }
       return next;
@@ -103,7 +92,7 @@ Feed feed;
 // Init ESP Now with fallback
 void InitESPNow() {
   WiFi.disconnect();
-  if (esp_now_init() == ESP_OK) {
+  if(esp_now_init() == ESP_OK) {
     Serial.println("ESPNow Init Success");
   }
   else {
@@ -122,29 +111,29 @@ void ScanForChild() {
   memset(children, 0, sizeof(children));
   ChildCnt = 0;
   Serial.println("");
-  if (scanResults == 0) {
+  if(scanResults == 0) {
     Serial.println("No WiFi devices in AP Mode found");
   } else {
     Serial.print("Found "); Serial.print(scanResults); Serial.println(" devices ");
-    for (int i = 0; i < scanResults; ++i) {
+    for(int i = 0; i < scanResults; ++i) {
       // Print SSID and RSSI for each device found
       String SSID = WiFi.SSID(i);
       int32_t RSSI = WiFi.RSSI(i);
       String BSSIDstr = WiFi.BSSIDstr(i);
 
-      if (PRINTSCANRESULTS) {
+      if(PRINTSCANRESULTS) {
         Serial.print(i + 1); Serial.print(": "); Serial.print(SSID); Serial.print(" ["); Serial.print(BSSIDstr); Serial.print("]"); Serial.print(" ("); Serial.print(RSSI); Serial.print(")"); Serial.println("");
       }
       delay(10);
       // Check if the current device starts with `Child`
-      if (SSID.indexOf("ESPChild") == 0) {
+      if(SSID.indexOf("ESPChild") == 0) {
         // SSID of interest
         Serial.print(i + 1); Serial.print(": "); Serial.print(SSID); Serial.print(" ["); Serial.print(BSSIDstr); Serial.print("]"); Serial.print(" ("); Serial.print(RSSI); Serial.print(")"); Serial.println("");
         // Get BSSID => Mac Address of the Child
         int mac[6];
 
-        if ( 6 == sscanf(BSSIDstr.c_str(), "%x:%x:%x:%x:%x:%x",  &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5] ) ) {
-          for (int ii = 0; ii < 6; ++ii ) {
+        if(6 == sscanf(BSSIDstr.c_str(), "%x:%x:%x:%x:%x:%x",  &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5])) {
+          for(int ii = 0; ii < 6; ++ii ) {
             children[ChildCnt].peer_addr[ii] = (uint8_t) mac[ii];
           }
         }
@@ -155,7 +144,7 @@ void ScanForChild() {
     }
   }
 
-  if (ChildCnt > 0) {
+  if(ChildCnt > 0) {
     Serial.print(ChildCnt); Serial.println(" Child(s) found, processing..");
   } else {
     Serial.println("No Child Found, trying again.");
@@ -169,41 +158,41 @@ void ScanForChild() {
 // Check if the child is already paired with the parent.
 // If not, pair the child with parent
 void manageChild() {
-  if (ChildCnt > 0) {
-    for (int i = 0; i < ChildCnt; i++) {
+  if(ChildCnt > 0) {
+    for(int i = 0; i < ChildCnt; i++) {
       Serial.print("Processing: ");
-      for (int ii = 0; ii < 6; ++ii ) {
+      for(int ii = 0; ii < 6; ++ii ) {
         Serial.print((uint8_t) children[i].peer_addr[ii], HEX);
-        if (ii != 5) Serial.print(":");
+        if(ii != 5) Serial.print(":");
       }
       Serial.print(" Status: ");
       // check if the peer exists
       bool exists = esp_now_is_peer_exist(children[i].peer_addr);
-      if (exists) {
+      if(exists) {
         // Child already paired.
         Serial.println("Already Paired");
         digitalWrite(CONNECTED, HIGH);
       } else {
         // Child not paired, attempt pair
         esp_err_t addStatus = esp_now_add_peer(&children[i]);
-        if (addStatus == ESP_OK) {
+        if(addStatus == ESP_OK) {
           // Pair success
           Serial.println("Pair success");
           digitalWrite(CONNECTED, HIGH);
-        } else if (addStatus == ESP_ERR_ESPNOW_NOT_INIT) {
+        } else if(addStatus == ESP_ERR_ESPNOW_NOT_INIT) {
           // How did we get so far!!
           Serial.println("ESPNOW Not Init");
           digitalWrite(CONNECTED, LOW);
-        } else if (addStatus == ESP_ERR_ESPNOW_ARG) {
+        } else if(addStatus == ESP_ERR_ESPNOW_ARG) {
           Serial.println("Add Peer - Invalid Argument");
           digitalWrite(CONNECTED, LOW);
-        } else if (addStatus == ESP_ERR_ESPNOW_FULL) {
+        } else if(addStatus == ESP_ERR_ESPNOW_FULL) {
           Serial.println("Peer list full");
           digitalWrite(CONNECTED, LOW);
-        } else if (addStatus == ESP_ERR_ESPNOW_NO_MEM) {
+        } else if(addStatus == ESP_ERR_ESPNOW_NO_MEM) {
           Serial.println("Out of memory");
           digitalWrite(CONNECTED, LOW);
-        } else if (addStatus == ESP_ERR_ESPNOW_EXIST) {
+        } else if(addStatus == ESP_ERR_ESPNOW_EXIST) {
           Serial.println("Peer Exists");
           digitalWrite(CONNECTED, LOW);
         } else {
@@ -238,34 +227,34 @@ bool sendData() {
   data++;
   Serial.print("CHILD COUNT: ");
   Serial.println(ChildCnt);
-  for (int i = 0; i < ChildCnt; i++) {
+  for(int i = 0; i < ChildCnt; i++) {
     const uint8_t *peer_addr = children[i].peer_addr;
-    if (i == 0) { // print only for first child
+    if(i == 0) { // print only for first child
       Serial.print("Sending: ");
       Serial.println(data);
     }
     esp_err_t result = esp_now_send(peer_addr, &data, sizeof(data));
     Serial.print("Send Status: ");
-    if (result == ESP_OK) {
+    if(result == ESP_OK) {
       Serial.println("Success");
       if(i == ChildCnt - 1) {
         handleFeed();
         return false;
       }
-    } else if (result == ESP_ERR_ESPNOW_NOT_INIT) {
+    } else if(result == ESP_ERR_ESPNOW_NOT_INIT) {
       // How did we get so far!!
       Serial.println("ESPNOW not Init.");
       return true;
-    } else if (result == ESP_ERR_ESPNOW_ARG) {
+    } else if(result == ESP_ERR_ESPNOW_ARG) {
       Serial.println("Invalid Argument");
       return true;
-    } else if (result == ESP_ERR_ESPNOW_INTERNAL) {
+    } else if(result == ESP_ERR_ESPNOW_INTERNAL) {
       Serial.println("Internal Error");
       return true;
-    } else if (result == ESP_ERR_ESPNOW_NO_MEM) {
+    } else if(result == ESP_ERR_ESPNOW_NO_MEM) {
       Serial.println("ESP_ERR_ESPNOW_NO_MEM");
       return true;
-    } else if (result == ESP_ERR_ESPNOW_NOT_FOUND) {
+    } else if(result == ESP_ERR_ESPNOW_NOT_FOUND) {
       Serial.println("Peer not found.");
       return true;
     } else {
@@ -280,7 +269,7 @@ bool sendData() {
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   char macStr[18];
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
-           mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+    mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
   Serial.print("Last Packet Sent to: "); Serial.println(macStr);
   Serial.print("Last Packet Send Status: "); Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 }
@@ -294,7 +283,7 @@ void setup() {
   digitalWrite(PWR, HIGH);
   digitalWrite(CONNECTED, LOW);
 
-  if (! rtc.begin()) {
+  if(!rtc.begin()) {
     Serial.println("Couldn't find RTC");
     while (1);
   }
@@ -320,7 +309,7 @@ void loop() {
   ScanForChild();
   // If Child is found, it would be populate in `child` variable
   // We will check if `child` is defined and then we proceed further
-  if (ChildCnt > 0) { // check if child channel is defined
+  if(ChildCnt > 0) { // check if child channel is defined
     // `child` is defined
     // Add child as peer if it has not been added already
     manageChild();
@@ -354,8 +343,7 @@ void loop() {
     }
     
   } else {
-    // No child found to process
+    // TODO
+    // Add remote logging for when no children are found to process
   }
-
-  delay(20); 
 }
