@@ -13,7 +13,7 @@ Servo auger; // continuous servo
 #define SERVO 26
 #define STALL 90 // Middle of servo (no movement)
 #define SPEED 100 // Rotation direction and speed 
-#define DELAY 9000 // Time to keep servo active
+#define DELAY 3000 // Time to keep servo active
 
 #define PWR 33
 #define CONNECTED 25// TBD
