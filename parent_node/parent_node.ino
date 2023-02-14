@@ -3,6 +3,7 @@
 #include <esp_now.h>
 #include <WiFi.h>
 #include <ESP32Servo.h>
+#include <HTTPClient.h>
 
 Servo auger; // continuous servo
 RTC_DS1307 rtc;
@@ -89,8 +90,16 @@ class Feed {
 
 Feed feed;
 
-void logToServer(String mac) {
-  
+void logToServer(String message) {
+  // Start WiFi
+  WiFi.begin("SSID", "PASSWORD");
+  Serial.println("Connecting to WiFi..");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println(".");
+  }
+  Serial.println("Connected to the WiFi network");
+
 }
 
 // Init ESP Now with fallback
