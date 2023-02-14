@@ -4,6 +4,7 @@
 #include <WiFi.h>
 #include <ESP32Servo.h>
 #include <HTTPClient.h>
+#include "wifi_credentials.h"
 
 Servo auger; // continuous servo
 RTC_DS1307 rtc;
@@ -70,6 +71,8 @@ class Feed {
 
     String getNextFeed(DateTime current_time) {
       int hour = current_time.hour();
+      int minute = current_time.minute();
+
       String next;
       if(hour >= night.hour && minute > night.minute) {
         next = midnight.printable_time;
@@ -90,17 +93,25 @@ class Feed {
 
 Feed feed;
 
-void logToServer(String message) {
-  // Start WiFi
-  WiFi.begin("SSID", "PASSWORD");
-  Serial.println("Connecting to WiFi..");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
-    Serial.println(".");
-  }
-  Serial.println("Connected to the WiFi network");
+// WIP
+// void logToServer(char[] message) {
+//   // Start WiFi
+//   WiFi.begin(ssid, password);
+//   Serial.println("Connecting to WiFi..");
+//   while (WiFi.status() != WL_CONNECTED) {
+//     delay(1000);
+//     Serial.println(".");
+//   }
+//   Serial.println("Connected to the WiFi network");
 
-}
+//   // Make a POST request to 192.168.1.26
+//   HTTPClient http;
+//   http.begin("http://192.168.1.26:8000");
+//   http.addHeader("Content-Type", "application/json");
+//   // Create JSON body to send
+//   String message = "{\"message\": \"" + String(message) + "\"}";
+//   int httpResponseCode = http.POST(message);
+// }
 
 // Init ESP Now with fallback
 void InitESPNow() {
