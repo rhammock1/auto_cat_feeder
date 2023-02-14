@@ -43,7 +43,7 @@ class Feed {
     feed_times afternoon = {16, 0, "04:00 PM"};
     feed_times night = {20, 0, "08:00 PM"};
 
-    int feedDelay = 6; // arbitrary number to make sure it doesn't run multiple times in a TimeSpan
+    int feedDelay = 2; // arbitrary number to make sure it doesn't run multiple times in a TimeSpan
 
     String formatTime(DateTime current_time) {
       String hour = String(current_time.hour());
@@ -88,6 +88,10 @@ class Feed {
 };
 
 Feed feed;
+
+void logToServer(String mac) {
+  
+}
 
 // Init ESP Now with fallback
 void InitESPNow() {
