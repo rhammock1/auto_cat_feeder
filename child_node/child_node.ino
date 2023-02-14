@@ -68,7 +68,7 @@ void setup() {
   digitalWrite(PWR, HIGH);
   digitalWrite(CONNECTED, LOW);
   
-  Serial.println("ESPNow/Basic/child Example");
+  Serial.println("Automatic Feeder --- Child Node")
   //Set device in AP mode to begin with
   WiFi.mode(WIFI_AP);
   // configure device AP mode
